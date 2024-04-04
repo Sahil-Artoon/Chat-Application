@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100%);
+            align-items: center;
+        }
+
+        /* this css if for Form */
+        .all-form {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .form {
+            width: 600px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="tel"] {
+            width: 50%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /*  This css is For CHAT APPLICATION  */
+        .sidebar {
+            width: 300px;
+            background-color: #f0f0f0;
+            padding: 20px;
+            display: none;
+            height: calc(100% - 50px);
+        }
+
+        .sidebar-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .all-groups {
+            border: 4px solid #ccc;
+            padding: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .all-users {
+            border: 4px solid #ccc;
+            padding: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .group-list {
+            border: 3px solid black;
+            text-align: center;
+            background-color: #9c8d8d;
+            padding: 20px 0px;
+        }
+
+        .group-list,
+        .user-list {
+            /* margin-bottom: 20px; */
+            border: 3px solid black;
+            text-align: center;
+            background-color: #9c8d8d;
+            padding: 20px 0px;
+            margin: 10px;
+        }
+
+        .group,
+        .user {
+            cursor: pointer;
+            padding: 5px 0;
+            border: 1px solid black;
+            margin: 5px;
+        }
+
+        .main {
+            display: none;
+            flex: 1;
+            padding: 20px;
+            height: calc(100% - 50px);
+            background-color: #ccc;
+        }
+
+        .search-bar {
+            margin-bottom: 40px;
+            text-align: center;
+            display: none;
+        }
+
+        .search-bar input {
+            width: 400px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .search-bar input:focus{
+            outline: none;
+        }
+        .search-bar button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+
+        }
+        .search-bar button:focus{
+            outline: none;
+        }
+
+        .chat-messages {
+            height: calc(100% - 50px);
+            /* Adjust height as needed */
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            display: none;
+        }
+
+        .chat-message {
+            width: 300px;
+            background-color: #fff;
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="all-form" id="form-all">
+            <form class="form" id="submit-form-data">
+                <h2>Contact Information</h2>
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="Enter your Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="tel" id="mobile" name="mobile" placeholder="Enter your Mobile Number" required>
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+        <div id="sidebars" class="sidebar">
+            <div class="all-groups">
+                <div class="sidebar-header">Make Group</div>
+                <div class="group-list">
+                    <!-- List of groups -->
+                    <div class="group" onclick="openChat()">Group 1</div>
+                    <div class="group" onclick="openChat()">Group 2</div>
+                    <!-- Add more groups as needed -->
+                </div>
+            </div>
+            <div class="all-users">
+                <div class="sidebar-header">All Users</div>
+                <div class="user-list">
+                    <!-- List of all users -->
+                    <div class="user">User 1</div>
+                    <div class="user">User 2</div>
+                    <!-- Add more users as needed -->
+                </div>
+            </div>
+        </div>
+        <div id="mains" class="main">
+            <!-- Chat messages area -->
+            <div class="chat-messages" id="chat-messagess">
+                <!-- Display chat messages here -->
+                <div class="chat-message">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorum libero a
+                    obcaecati, reprehenderit ex id, aliquid perferendis dolores expedita eaque cupiditate natus
+                    repudiandae.</div>
+            </div>
+            <div class="search-bar" id="search-bars">
+                <input type="text" placeholder="Write Your message">
+                <button>Search</button>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    document.getElementById('submit-form-data').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('name').value
+        const mobile = document.getElementById('mobile').value
+
+        if (name == '' || mobile == '') {
+            alert('Please fill all the fields')
+        } else {
+            document.getElementById('form-all').style.display = 'none'
+            document.getElementById('sidebars').style.display = 'block'
+            // document.getElementById('chat-messagess').style.display = 'block'
+            // document.getElementById('search-bars').style.display = 'block'
+            document.getElementById('mains').style.display = 'block'
+        }
+    })
+    const openChat = () => {
+        document.getElementById('chat-messagess').style.display = 'block'
+        document.getElementById('search-bars').style.display = 'block'
+        document.getElementById('mains').style.display = 'block'
+
+    }
+</script>
+
+</html>
