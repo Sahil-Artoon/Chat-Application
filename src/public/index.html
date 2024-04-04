@@ -5,8 +5,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Application</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
+        /* This css for Login */
+        #all-login {
+            /* width: 100%; */
+            display: flex;
+            justify-content: center;
+        }
+
+        #login-form {
+            width: 600px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        #login-heading {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #form-group {
+            margin-bottom: 20px;
+        }
+
+        #label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #mobiles {
+            width: 50%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #loginButton {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #loginButton:hover {
+            background-color: #0056b3;
+        }
+
+        /* Login css over */
         body,
         html {
             margin: 0;
@@ -19,13 +72,12 @@
             display: flex;
             height: calc(100%);
             align-items: center;
+            justify-content: center;
         }
 
         /* this css if for Form */
         .all-form {
-            width: 100%;
-            display: flex;
-            justify-content: center;
+            display: none;
         }
 
         .form {
@@ -149,9 +201,11 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        .search-bar input:focus{
+
+        .search-bar input:focus {
             outline: none;
         }
+
         .search-bar button {
             padding: 8px 15px;
             background-color: #007bff;
@@ -161,7 +215,8 @@
             cursor: pointer;
 
         }
-        .search-bar button:focus{
+
+        .search-bar button:focus {
             outline: none;
         }
 
@@ -186,6 +241,24 @@
 
 <body>
     <div class="container">
+        <!-- This is for login form -->
+        <div id="all-login">
+            <form id="login-form">
+                <h2>Login</h2>
+                <div id="form-group">
+                    <label for="mobile" id="label">Mobile Number</label>
+                    <input type="tel" id="mobiles" name="mobiles" placeholder="Enter your mobile number" required>
+                </div>
+                <div style="display: flex; justify-content: center;">
+                    <button type="submit" id="loginButton" style="margin-right: 10px;">Login</button>
+                    <button type="button" id="loginButton" style="margin-left: 10px;"
+                        onclick="registerData()">Register</button>
+                </div>
+            </form>
+        </div>
+        <!-- login Over -->
+
+        <!-- this is for Take user name and mobile Number -->
         <div class="all-form" id="form-all">
             <form class="form" id="submit-form-data">
                 <h2>Contact Information</h2>
@@ -200,7 +273,11 @@
                 <button type="submit">Submit</button>
             </form>
         </div>
+        <!-- register Over -->
+
+        <!-- This is for sideBar -->
         <div id="sidebars" class="sidebar">
+            <!-- this is for group -->
             <div class="all-groups">
                 <div class="sidebar-header">Make Group</div>
                 <div class="group-list">
@@ -210,16 +287,15 @@
                     <!-- Add more groups as needed -->
                 </div>
             </div>
+            <!-- this is for user -->
             <div class="all-users">
                 <div class="sidebar-header">All Users</div>
-                <div class="user-list">
-                    <!-- List of all users -->
-                    <div class="user">User 1</div>
-                    <div class="user">User 2</div>
-                    <!-- Add more users as needed -->
-                </div>
+                <div class="user-list" id="all-user"></div>
             </div>
         </div>
+        <!-- sidebar Over -->
+
+        <!-- This is for main All Chat -->
         <div id="mains" class="main">
             <!-- Chat messages area -->
             <div class="chat-messages" id="chat-messagess">
@@ -228,14 +304,72 @@
                     obcaecati, reprehenderit ex id, aliquid perferendis dolores expedita eaque cupiditate natus
                     repudiandae.</div>
             </div>
+            <!-- Chat form area -->
             <div class="search-bar" id="search-bars">
                 <input type="text" placeholder="Write Your message">
                 <button>Search</button>
             </div>
         </div>
+        <!-- main Over -->
     </div>
 </body>
+<script src="/socket.io/socket.io.js"></script>
 <script>
+    const socket = io();
+
+    // get cookies 
+    // var username = getCookie("User");
+    // if (username) {
+    //     document.getElementById('form-all').style.display = 'none'
+    //     document.getElementById('all-login').style.display = 'none'
+    //     document.getElementById('sidebars').style.display = 'block'
+    //     document.getElementById('mains').style.display = 'block'
+    // }
+    // This is for register display block
+    function registerData() {
+        document.getElementById('form-all').style.display = 'block';
+        document.getElementById('all-login').style.display = 'none';
+    }
+    // This is for handal login form data
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const mobile = document.getElementById('mobiles').value
+
+        if (mobile == '') {
+            alert('Please Enter Mobile Number')
+        } else {
+            let data = {
+                mobile
+            }
+            // console.log("Mobile Number Is", data)
+            socket.emit('LOGIN_USER', data)
+        }
+    })
+
+    socket.on("LOGIN_USER_RES", (data) => {
+        console.log("LOGIN_USER_RES", data)
+        if (data.message === 'ok') {
+            socket.emit('ALL_USER')
+            document.getElementById('form-all').style.display = 'none'
+            document.getElementById('all-login').style.display = 'none';
+            document.getElementById('sidebars').style.display = 'block'
+            document.getElementById('mains').style.display = 'block'
+        } else {
+            alert(data.message)
+            document.getElementById('form-all').style.display = 'block'
+            document.getElementById('all-login').style.display = 'none';
+        }
+    })
+    socket.on('ALL_USER', (data) => {
+        if (data.length !== 0) {
+            for (let i = 0; i < data.length; i++) {
+                createUserElement(data[i].name)
+            }
+        }
+    })
+    // this is for response to login User.
+
+    // This this for submit data of user like name and mobile number.
     document.getElementById('submit-form-data').addEventListener('submit', (e) => {
         e.preventDefault();
         const name = document.getElementById('name').value
@@ -244,18 +378,66 @@
         if (name == '' || mobile == '') {
             alert('Please fill all the fields')
         } else {
+            let data = {
+                name,
+                mobile
+            }
+            socket.emit('ADD_USER_DATA', data)
+        }
+    })
+    // This is for response of Registration User.
+    socket.on("ADD_USER_DATA", (data) => {
+        console.log("Data Of ADD_USER_DATA = ", data)
+        if (data.message === "ok") {
+            // setCookie("User", data.userCreate.mobile, 1);
             document.getElementById('form-all').style.display = 'none'
-            document.getElementById('sidebars').style.display = 'block'
-            // document.getElementById('chat-messagess').style.display = 'block'
-            // document.getElementById('search-bars').style.display = 'block'
-            document.getElementById('mains').style.display = 'block'
+            document.getElementById('all-login').style.display = 'block';
+            // window.location.reload();
+        } else {
+            alert(data.message)
         }
     })
     const openChat = () => {
         document.getElementById('chat-messagess').style.display = 'block'
         document.getElementById('search-bars').style.display = 'block'
         document.getElementById('mains').style.display = 'block'
+    }
+    // getCookie Functiom
+    function getCookie(name) {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith(name + '=')) {
+                return cookie.substring(name.length + 1);
+            }
+        }
+        return null;
+    }
 
+    // setCookie Functiom
+    function setCookie(name, value, minutes) {
+        var expires = "";
+        if (minutes) {
+            var date = new Date();
+            date.setTime(date.getTime() + (minutes * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    function createGroupElement() {
+        var groupDiv = document.createElement("div");
+        groupDiv.classList.add("group");
+        groupDiv.onclick = openChat;
+        groupDiv.textContent = "Group 1";
+        document.getElementById("container").appendChild(groupDiv);
+    }
+    function createUserElement(name) {
+        var userDiv = document.createElement("div");
+        userDiv.classList.add("user");
+        userDiv.onclick = openChat;
+        userDiv.textContent = name;
+        document.getElementById("all-user").appendChild(userDiv);
     }
 </script>
 
