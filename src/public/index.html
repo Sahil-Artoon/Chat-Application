@@ -144,14 +144,13 @@
         .all-groups {
             border: 4px solid #ccc;
             padding: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             text-align: center;
         }
 
         .all-users {
             border: 4px solid #ccc;
             padding: 10px;
-            margin-bottom: 30px;
             text-align: center;
         }
 
@@ -279,8 +278,8 @@
         <div id="sidebars" class="sidebar">
             <!-- this is for group -->
             <div class="all-groups">
-                <div class="sidebar-header">Make Group</div>
-                <div class="group-list">
+                <button class="sidebar-header" onclick="closeMain()">Make Group</button>
+                <div class="group-list" id="all-group-item">
                     <!-- List of groups -->
                     <div class="group" onclick="openChat()">Group 1</div>
                     <div class="group" onclick="openChat()">Group 2</div>
@@ -289,7 +288,8 @@
             </div>
             <!-- this is for user -->
             <div class="all-users">
-                <div class="sidebar-header">All Users</div>
+                <input type="search" class="sidebar-header" id="search-user" placeholder="Search User"
+                    onkeyup="findUserName()">
                 <div class="user-list" id="all-user"></div>
             </div>
         </div>
@@ -308,6 +308,7 @@
             <div class="search-bar" id="search-bars">
                 <input type="text" placeholder="Write Your message">
                 <button>Search</button>
+                <button onclick="closeMain()">close</button>
             </div>
         </div>
         <!-- main Over -->
@@ -318,13 +319,21 @@
     const socket = io();
 
     // get cookies 
-    // var username = getCookie("User");
-    // if (username) {
-    //     document.getElementById('form-all').style.display = 'none'
-    //     document.getElementById('all-login').style.display = 'none'
-    //     document.getElementById('sidebars').style.display = 'block'
-    //     document.getElementById('mains').style.display = 'block'
-    // }
+    var username = getCookie("User");
+    const currentUser = JSON.parse(username)
+    if (username) {
+        socket.emit('ADD_SOCKET_ID', currentUser)
+        socket.emit('ALL_USER')
+        document.getElementById('form-all').style.display = 'none'
+        document.getElementById('all-login').style.display = 'none';
+        document.getElementById('sidebars').style.display = 'block'
+        document.getElementById('mains').style.display = 'block'
+    } else {
+        document.getElementById('form-all').style.display = 'none'
+        document.getElementById('all-login').style.display = 'block';
+        document.getElementById('sidebars').style.display = 'none'
+        document.getElementById('mains').style.display = 'none'
+    }
     // This is for register display block
     function registerData() {
         document.getElementById('form-all').style.display = 'block';
@@ -347,8 +356,10 @@
     })
 
     socket.on("LOGIN_USER_RES", (data) => {
-        console.log("LOGIN_USER_RES", data)
+        console.log("LOGIN_USER_RES", data.findUser)
         if (data.message === 'ok') {
+            setCookie("User", JSON.stringify(data.findUser), 5);
+            window.location.reload();
             socket.emit('ALL_USER')
             document.getElementById('form-all').style.display = 'none'
             document.getElementById('all-login').style.display = 'none';
@@ -361,14 +372,13 @@
         }
     })
     socket.on('ALL_USER', (data) => {
-        if (data.length !== 0) {
-            for (let i = 0; i < data.length; i++) {
-                createUserElement(data[i].name)
-            }
+        // console.log("All_User of data ==========", data)
+        if (data.message === 'ok') {
+            removeUserElement()
+            printUser(data)
         }
     })
     // this is for response to login User.
-
     // This this for submit data of user like name and mobile number.
     document.getElementById('submit-form-data').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -389,7 +399,6 @@
     socket.on("ADD_USER_DATA", (data) => {
         console.log("Data Of ADD_USER_DATA = ", data)
         if (data.message === "ok") {
-            // setCookie("User", data.userCreate.mobile, 1);
             document.getElementById('form-all').style.display = 'none'
             document.getElementById('all-login').style.display = 'block';
             // window.location.reload();
@@ -415,11 +424,11 @@
     }
 
     // setCookie Functiom
-    function setCookie(name, value, minutes) {
+    function setCookie(name, value, days) {
         var expires = "";
-        if (minutes) {
+        if (days) {
             var date = new Date();
-            date.setTime(date.getTime() + (minutes * 60 * 1000));
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
             expires = "; expires=" + date.toUTCString();
         }
         document.cookie = name + "=" + (value || "") + expires + "; path=/";
@@ -432,13 +441,76 @@
         groupDiv.textContent = "Group 1";
         document.getElementById("container").appendChild(groupDiv);
     }
-    function createUserElement(name) {
+    function createUserElement(name, id) {
         var userDiv = document.createElement("div");
         userDiv.classList.add("user");
-        userDiv.onclick = openChat;
+        userDiv.id = id; // Set the id attribute
+        userDiv.onclick = function () {
+            openChat();
+            chat(name);
+        };
         userDiv.textContent = name;
         document.getElementById("all-user").appendChild(userDiv);
     }
+
+    function removeUserElement() {
+        var elements = document.querySelectorAll('.user');
+        elements.forEach(function (element) {
+            element.remove();
+        });
+    }
+
+    // Search Users.
+    function findUserName() {
+        const input = document.getElementById('search-user').value;
+        if (input == "") {
+            socket.emit('ALL_USER')
+        } else {
+            socket.emit('SEARCH_USER', input);
+        }
+    }
+
+    socket.on('SEARCH_USER', (data) => {
+        console.log("Data Of SEARCH_USER = ", data)
+        if (data.message === 'ok') {
+            removeUserElement()
+            printUser(data)
+        } else {
+            alert(data.message)
+        }
+    })
+
+    // Print User
+    function printUser(data) {
+        if (data.users.length !== 0) {
+            removeUserElement()
+            for (let i = 0; i < 10; i++) {
+                if (currentUser._id !== data.users[i]._id) {
+                    createUserElement(data.users[i].name, data.users[i]._id)
+                }
+            }
+        }
+    }
+    // Close Main Chat
+    function closeMain() {
+        document.getElementById('chat-messagess').style.display = 'none'
+        document.getElementById('search-bars').style.display = 'none'
+        // document.getElementById('mains').style.display = 'none'
+    }
+
+    // function getAllUser() {
+    //     socket.emit('GET_ALL_USER_FOR_GROUP')
+    // }
+    // socket.on('GET_ALL_USER_FOR_GROUP', (data) => {
+    //     // console.log('GET_ALL_USER_FOR_GROUP', data)
+    //     if (data.message === 'ok') {
+
+    //     }
+    // })
+    function chat(id) {
+        console.log('Id Is ====>', id)
+    }
+
 </script>
 
 </html>

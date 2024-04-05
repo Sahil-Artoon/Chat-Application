@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import connectDB from './config/connectDB.js';
 import router from './Router/userRouter.js';
-import { addUserData, findAlluser, loginUser } from './controller/userController.js';
+import { addNewSocketId, addUserData, findAlluser, findAlluserAtSearchTime, findAlluserForGroup, findUserWithRegex, loginUser, updateSocketId } from './controller/userController.js';
 
 connectDB()
 
@@ -19,10 +19,13 @@ const server = http.createServer(app);
 global.io = new Server(server);
 
 io.on('connection', async (socket) => {
+    socket.on('ADD_SOCKET_ID', async (data) => {
+        await addNewSocketId(data, socket.id);
+    })
     socket.on("ADD_USER_DATA", async (data) => {
         const resultOfAddUser = await addUserData(data, socket.id)
         // console.log("resultOfAddUser = ", resultOfAddUser)
-        
+
     })
     socket.on('LOGIN_USER', async (data) => {
         await loginUser(data, socket.id)
@@ -30,6 +33,19 @@ io.on('connection', async (socket) => {
 
     socket.on('ALL_USER', async () => {
         await findAlluser(socket.id)
+    })
+    socket.on('SEARCH_USER', async (data) => {
+        await findUserWithRegex(data, socket.id)
+    })
+    socket.on('ALL_USER_AT_SEARCH', async (data) => {
+        await findAlluserAtSearchTime(socket.id);
+    })
+    socket.on('GET_ALL_USER_FOR_GROUP', async (data) => {
+        console.log("At GET_ALL_USER_FOR_GROUP")
+        await findAlluserForGroup(socket.id)
+    })
+    socket.on('disconnect', async () => {
+        await updateSocketId(socket.id);
     })
 })
 
