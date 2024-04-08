@@ -13,6 +13,10 @@
             justify-content: center;
         }
 
+        .w-100 {
+            width: 100%;
+        }
+
         #login-form {
             width: 600px;
             background-color: #fff;
@@ -229,9 +233,28 @@
             display: none;
         }
 
-        .chat-message {
-            width: 300px;
+        .left {
+            text-align: left;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .rightSide {
+            width: auto;
+            margin-left: 20%;
+            padding: 10px;
+            text-align: right;
             background-color: #fff;
+            display: inline-block;
+        }
+
+        .leftSide {
+            width: auto;
+            background-color: #fff;
+            display: inline-block;
+            margin-right: 20%;
             padding: 10px;
             text-align: left;
         }
@@ -300,23 +323,22 @@
             <!-- Chat messages area -->
             <div class="chat-messages" id="chat-messagess">
                 <!-- Display chat messages here -->
-                <div class="chat-message">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorum libero a
-                    obcaecati, reprehenderit ex id, aliquid perferendis dolores expedita eaque cupiditate natus
-                    repudiandae.</div>
             </div>
             <!-- Chat form area -->
             <div class="search-bar" id="search-bars">
-                <input type="text" placeholder="Write Your message">
-                <button>Search</button>
+                <input type="text" id="chatMessage" placeholder="Write Your message">
+                <button onclick="addChats()">Send</button>
                 <button onclick="closeMain()">close</button>
             </div>
         </div>
+
         <!-- main Over -->
     </div>
 </body>
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
+    let receiver;
 
     // get cookies 
     var username = getCookie("User");
@@ -374,7 +396,7 @@
     socket.on('ALL_USER', (data) => {
         // console.log("All_User of data ==========", data)
         if (data.message === 'ok') {
-            removeUserElement()
+            removeUserElement('.user')
             printUser(data)
         }
     })
@@ -447,14 +469,14 @@
         userDiv.id = id; // Set the id attribute
         userDiv.onclick = function () {
             openChat();
-            chat(name);
+            chat(id);
         };
         userDiv.textContent = name;
         document.getElementById("all-user").appendChild(userDiv);
     }
 
-    function removeUserElement() {
-        var elements = document.querySelectorAll('.user');
+    function removeUserElement(name) {
+        var elements = document.querySelectorAll(name);
         elements.forEach(function (element) {
             element.remove();
         });
@@ -484,9 +506,17 @@
     function printUser(data) {
         if (data.users.length !== 0) {
             removeUserElement()
-            for (let i = 0; i < 10; i++) {
-                if (currentUser._id !== data.users[i]._id) {
-                    createUserElement(data.users[i].name, data.users[i]._id)
+            if (data.users.length > 10) {
+                for (let i = 0; i < 10; i++) {
+                    if (currentUser._id !== data.users[i]._id) {
+                        createUserElement(data.users[i].name, data.users[i]._id)
+                    }
+                }
+            } else {
+                for (let i = 0; i < data.users.length; i++) {
+                    if (currentUser._id !== data.users[i]._id) {
+                        createUserElement(data.users[i].name, data.users[i]._id)
+                    }
                 }
             }
         }
@@ -508,9 +538,111 @@
     //     }
     // })
     function chat(id) {
-        console.log('Id Is ====>', id)
+        receiver = id
+        let data = {
+            senderId: currentUser._id,
+            receiverId: id
+        }
+        // console.log("This data is for add chat:-------------",data)
+        socket.emit('PAST_CHAT_MESSAGE', data)
     }
+    socket.on('PAST_CHAT_MESSAGE', (data) => {
+        console.log("PAST_CHAT_MESSAGE:::::::>>>>", data)
+        removeUserElement('.w-100')
+        if (data.chatData.length > 0) {
+            // console.log('PAST_CHAT_MESSAGE========>', data)
+            if (data.message === 'ok') {
+                for (let i = 0; i < data.chatData.length; i++) {
+                    // console.log("Data.......>", data.chatData[i].sender._id, data.chatData[i].message)
+                    printPastMessage(data.chatData[i].sender._id, data.chatData[i].message)
+                }
+            } else {
+                alert(data.message);
+            }
+        }
+    })
+    function printPastMessage(senderId, message) {
+        let parents = document.getElementById("chat-messagess")
+        var newDiv = document.createElement("div");
+        newDiv.classList.add("w-100");
+        var newP = document.createElement("p");
+        if (senderId == currentUser._id) {
+            newDiv.classList.add("right");
+            newP.classList.add("chat-message");
+            newP.classList.add("rightSide");
+            newP.id = "chatMess";
+            newP.textContent = message;
+            newDiv.appendChild(newP)
+            parents.appendChild(newDiv);
+        } else {
+            newDiv.classList.add("left");
+            newP.classList.add("chat-message");
+            newP.classList.add("leftSide");
+            newP.id = "chatMess";
+            newP.textContent = message;
+            newDiv.appendChild(newP)
+            parents.appendChild(newDiv);
+        }
 
+        scrollToBottom()
+    }
+    const chatContainer = document.getElementById('chat-messagess')
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    function addChats() {
+        const message = document.getElementById('chatMessage').value
+        // console.log("message=====>", message)
+        // console.log("currentUser._id=======>", currentUser._id)
+        // console.log("receiver====>", receiver)
+        let sender = currentUser._id
+        let data = {
+            sender, receiver, message
+        }
+
+        socket.emit('ADD_CHAT', data)
+        document.getElementById('chatMessage').value = ''
+    }
+    socket.on('ADD_CHAT', (data) => {
+        if (data.message === 'ok') {
+            // console.log(data)
+            socket.emit('GET_CHAT_DATA', data)
+        } else {
+            alert(data.message)
+        }
+    })
+    socket.on('GET_CHAT_DATA', (data) => {
+        if (data.message === 'ok') {
+            console.log(data)
+            printMessage(data);
+        } else {
+            alert(data.message)
+        }
+    })
+    function printMessage(data) {
+        let parents = document.getElementById("chat-messagess")
+        var newDiv = document.createElement("div");
+        newDiv.classList.add("w-100");
+        var newP = document.createElement("p");
+        if (data.sendData.sender._id == currentUser._id) {
+            newDiv.classList.add("right");
+            newP.classList.add("chat-message");
+            newP.classList.add("rightSide");
+            newP.id = "chatMess";
+            newP.textContent = data.sendData.message;
+            newDiv.appendChild(newP)
+            parents.appendChild(newDiv);
+        } else {
+            newDiv.classList.add("left");
+            newP.classList.add("chat-message");
+            newP.classList.add("leftSide");
+            newP.id = "chatMess";
+            newP.textContent = data.sendData.message;
+            newDiv.appendChild(newP)
+            parents.appendChild(newDiv);
+        }
+        scrollToBottom()
+    }
 </script>
 
 </html>

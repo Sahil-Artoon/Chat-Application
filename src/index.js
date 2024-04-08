@@ -8,6 +8,7 @@ import { dirname } from 'path';
 import connectDB from './config/connectDB.js';
 import router from './Router/userRouter.js';
 import { addNewSocketId, addUserData, findAlluser, findAlluserAtSearchTime, findAlluserForGroup, findUserWithRegex, loginUser, updateSocketId } from './controller/userController.js';
+import { addChat, findPaseChatMessages, getCurrentChatData } from './controller/chatController.js';
 
 connectDB()
 
@@ -19,6 +20,7 @@ const server = http.createServer(app);
 global.io = new Server(server);
 
 io.on('connection', async (socket) => {
+    console.log(socket.id);
     socket.on('ADD_SOCKET_ID', async (data) => {
         await addNewSocketId(data, socket.id);
     })
@@ -44,6 +46,17 @@ io.on('connection', async (socket) => {
         console.log("At GET_ALL_USER_FOR_GROUP")
         await findAlluserForGroup(socket.id)
     })
+
+    socket.on("ADD_CHAT", async (data) => {
+        await addChat(data, socket.id)
+    })
+    socket.on('GET_CHAT_DATA', async (data) => {
+        await getCurrentChatData(data, socket.id)
+    })
+    socket.on('PAST_CHAT_MESSAGE', async (data) => {
+        await findPaseChatMessages(data, socket.id)
+    })
+
     socket.on('disconnect', async () => {
         await updateSocketId(socket.id);
     })
