@@ -293,6 +293,7 @@
                     <input type="tel" id="mobile" name="mobile" placeholder="Enter your Mobile Number" required>
                 </div>
                 <button type="submit">Submit</button>
+                <button type="button" onclick="pageReload()">Login</button>
             </form>
         </div>
         <!-- register Over -->
@@ -429,6 +430,7 @@
         }
     })
     const openChat = () => {
+        removeUserElement('.w-100')
         document.getElementById('chat-messagess').style.display = 'block'
         document.getElementById('search-bars').style.display = 'block'
         document.getElementById('mains').style.display = 'block'
@@ -443,6 +445,10 @@
             }
         }
         return null;
+    }
+
+    function pageReload() {
+        window.location.reload();
     }
 
     // setCookie Functiom
