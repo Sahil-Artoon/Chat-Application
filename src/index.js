@@ -9,6 +9,8 @@ import connectDB from './config/connectDB.js';
 import router from './Router/userRouter.js';
 import { addNewSocketId, addUserData, findAlluser, findAlluserAtSearchTime, findAlluserForGroup, findUserWithRegex, loginUser, updateSocketId } from './controller/userController.js';
 import { addChat, findPaseChatMessages, getCurrentChatData } from './controller/chatController.js';
+import { createGroup, getAllGroups } from './controller/groupController.js';
+import { addGroupChat, pastGroupChat } from './controller/groupChatController.js';
 
 connectDB()
 
@@ -43,7 +45,6 @@ io.on('connection', async (socket) => {
         await findAlluserAtSearchTime(socket.id);
     })
     socket.on('GET_ALL_USER_FOR_GROUP', async (data) => {
-        console.log("At GET_ALL_USER_FOR_GROUP")
         await findAlluserForGroup(socket.id)
     })
 
@@ -55,6 +56,22 @@ io.on('connection', async (socket) => {
     })
     socket.on('PAST_CHAT_MESSAGE', async (data) => {
         await findPaseChatMessages(data, socket.id)
+    })
+
+    socket.on('CREATE_GROUP', async (data) => {
+        await createGroup(data, socket.id)
+    })
+
+    socket.on('GET_ALL_GROUP', async (data) => {
+        await getAllGroups(data, socket.id)
+    })
+
+    socket.on('ADD_GROUP_CHAT', async (data) => {
+        await addGroupChat(data, socket.id)
+    })
+
+    socket.on('PAST_GROUP_CHAT', async (data) => {
+        await pastGroupChat(data, socket.id)
     })
 
     socket.on('disconnect', async () => {

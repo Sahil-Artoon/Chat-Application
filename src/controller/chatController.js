@@ -31,7 +31,7 @@ const getCurrentChatData = async (data, socketID) => {
             let senderUserid = sendData.sender.socketId
             let receiverUserid = sendData.receiver.socketId
             let socketIDs = [senderUserid, receiverUserid]
-            return io.to(socketIDs).emit("GET_CHAT_DATA", { status: 200, message: "ok", sendData });
+            return io.to(socketID).emit("GET_CHAT_DATA", { status: 200, message: "ok", sendData });
         } else {
             return io.to(socketID).emit("GET_CHAT_DATA", { status: 404, message: "Enter Valid Data" });
         }
@@ -60,7 +60,7 @@ const findPaseChatMessages = async (data, socketID) => {
         // console.log("receiverSocketID===>", receiverSocketID)
         // console.log(chatData)
         let arrayOfSocketIds = [senderSocketID, receiverSocketID]
-        return io.to(arrayOfSocketIds).emit('PAST_CHAT_MESSAGE', { status: 200, message: 'ok', chatData })
+        return io.to(socketID).emit('PAST_CHAT_MESSAGE', { status: 200, message: 'ok', chatData })
     } catch (error) {
         console.log("error at findPaseChatMessages time.", error.message);
         return io.to(socketID).emit("PAST_CHAT_MESSAGE", { status: 500, message: "Internal Server Error" });

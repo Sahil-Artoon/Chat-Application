@@ -5,16 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Application</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
         /* This css for Login */
+        p{
+            margin: 0px !important;
+        }
         #all-login {
             /* width: 100%; */
             display: flex;
             justify-content: center;
         }
 
-        .w-100 {
+        .ww-100 {
             width: 100%;
+            margin-bottom: 10px;
         }
 
         #login-form {
@@ -258,6 +264,10 @@
             padding: 10px;
             text-align: left;
         }
+
+        input[type="checkbox"] {
+            color: red !important;
+        }
     </style>
 </head>
 
@@ -302,11 +312,17 @@
         <div id="sidebars" class="sidebar">
             <!-- this is for group -->
             <div class="all-groups">
-                <button class="sidebar-header" onclick="closeMain()">Make Group</button>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle sidebar-header"
+                        onclick="closeMain();sendGroupEvent()" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        Make Group
+                    </button>
+                    <ul class="dropdown-menu" id="dropDown">
+                    </ul>
+                </div>
                 <div class="group-list" id="all-group-item">
                     <!-- List of groups -->
-                    <div class="group" onclick="openChat()">Group 1</div>
-                    <div class="group" onclick="openChat()">Group 2</div>
                     <!-- Add more groups as needed -->
                 </div>
             </div>
@@ -335,11 +351,16 @@
 
         <!-- main Over -->
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
 </body>
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
     let receiver;
+    let addNewUserChat = false;
+    let addNewGroupChat = false
 
     // get cookies 
     var username = getCookie("User");
@@ -430,7 +451,7 @@
         }
     })
     const openChat = () => {
-        removeUserElement('.w-100')
+        removeUserElement('.ww-100')
         document.getElementById('chat-messagess').style.display = 'block'
         document.getElementById('search-bars').style.display = 'block'
         document.getElementById('mains').style.display = 'block'
@@ -462,13 +483,6 @@
         document.cookie = name + "=" + (value || "") + expires + "; path=/";
     }
 
-    function createGroupElement() {
-        var groupDiv = document.createElement("div");
-        groupDiv.classList.add("group");
-        groupDiv.onclick = openChat;
-        groupDiv.textContent = "Group 1";
-        document.getElementById("container").appendChild(groupDiv);
-    }
     function createUserElement(name, id) {
         var userDiv = document.createElement("div");
         userDiv.classList.add("user");
@@ -534,17 +548,9 @@
         // document.getElementById('mains').style.display = 'none'
     }
 
-    // function getAllUser() {
-    //     socket.emit('GET_ALL_USER_FOR_GROUP')
-    // }
-    // socket.on('GET_ALL_USER_FOR_GROUP', (data) => {
-    //     // console.log('GET_ALL_USER_FOR_GROUP', data)
-    //     if (data.message === 'ok') {
-
-    //     }
-    // })
     function chat(id) {
         receiver = id
+        addNewUserChat = true
         let data = {
             senderId: currentUser._id,
             receiverId: id
@@ -554,7 +560,7 @@
     }
     socket.on('PAST_CHAT_MESSAGE', (data) => {
         console.log("PAST_CHAT_MESSAGE:::::::>>>>", data)
-        removeUserElement('.w-100')
+        removeUserElement('.ww-100')
         if (data.chatData.length > 0) {
             // console.log('PAST_CHAT_MESSAGE========>', data)
             if (data.message === 'ok') {
@@ -570,7 +576,7 @@
     function printPastMessage(senderId, message) {
         let parents = document.getElementById("chat-messagess")
         var newDiv = document.createElement("div");
-        newDiv.classList.add("w-100");
+        newDiv.classList.add("ww-100");
         var newP = document.createElement("p");
         if (senderId == currentUser._id) {
             newDiv.classList.add("right");
@@ -598,16 +604,23 @@
     }
     function addChats() {
         const message = document.getElementById('chatMessage').value
-        // console.log("message=====>", message)
-        // console.log("currentUser._id=======>", currentUser._id)
-        // console.log("receiver====>", receiver)
         let sender = currentUser._id
-        let data = {
-            sender, receiver, message
+        if (addNewUserChat) {
+            addNewUserChat = false;
+            let data = {
+                sender, receiver, message
+            }
+            socket.emit('ADD_CHAT', data)
+            document.getElementById('chatMessage').value = ''
         }
-
-        socket.emit('ADD_CHAT', data)
-        document.getElementById('chatMessage').value = ''
+        if (addNewGroupChat) {
+            addNewGroupChat = false;
+            let data = {
+                sender, receiver, message
+            }
+            socket.emit('ADD_GROUP_CHAT', data)
+            document.getElementById('chatMessage').value = ''
+        }
     }
     socket.on('ADD_CHAT', (data) => {
         if (data.message === 'ok') {
@@ -617,25 +630,32 @@
             alert(data.message)
         }
     })
-    socket.on('GET_CHAT_DATA', (data) => {
+    socket.on('ADD_GROUP_CHAT', (data) => {
         if (data.message === 'ok') {
-            console.log(data)
-            printMessage(data);
+            printMessage(data.addGroupChat.sender, data.addGroupChat.message)
         } else {
             alert(data.message)
         }
     })
-    function printMessage(data) {
+    socket.on('GET_CHAT_DATA', (data) => {
+        if (data.message === 'ok') {
+            console.log(data)
+            printMessage(data.sendData.sender._id, data.sendData.message);
+        } else {
+            alert(data.message)
+        }
+    })
+    function printMessage(id, message) {
         let parents = document.getElementById("chat-messagess")
         var newDiv = document.createElement("div");
         newDiv.classList.add("w-100");
         var newP = document.createElement("p");
-        if (data.sendData.sender._id == currentUser._id) {
+        if (id == currentUser._id) {
             newDiv.classList.add("right");
             newP.classList.add("chat-message");
             newP.classList.add("rightSide");
             newP.id = "chatMess";
-            newP.textContent = data.sendData.message;
+            newP.textContent = message;
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);
         } else {
@@ -643,12 +663,180 @@
             newP.classList.add("chat-message");
             newP.classList.add("leftSide");
             newP.id = "chatMess";
-            newP.textContent = data.sendData.message;
+            newP.textContent = message;
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);
         }
         scrollToBottom()
     }
+    // ::::::::: This is for Gropus :::::::::
+    socket.emit("GET_ALL_GROUP", currentUser._id)
+    socket.on("GET_ALL_GROUP", (data) => {
+        if (data.message === "ok") {
+            console.log(data)
+            removeUserElement('.group')
+            if (data.groups.length != 0) {
+
+                if (data.groups.length > 1) {
+                    for (let i = 0; i < data.groups.length; i++) {
+                        createGroupElement(data.groups[i].groupName, data.groups[i]._id);
+                    }
+                } else {
+                    createGroupElement(data.groups[0].groupName, data.groups[0]._id);
+                }
+            }
+        } else {
+            alert(data.message)
+        }
+    })
+    function createGroupElement(name, id) {
+        var groupDiv = document.createElement("div");
+        groupDiv.classList.add("group");
+        groupDiv.id = id;
+        groupDiv.onclick = () => {
+            openChat();
+            groupChat(id);
+        };
+        groupDiv.textContent = name;
+        document.getElementById("all-group-item").appendChild(groupDiv);
+    }
+
+    function sendGroupEvent() {
+        socket.emit('GET_ALL_USER_FOR_GROUP')
+    }
+
+    socket.on('GET_ALL_USER_FOR_GROUP', (data) => {
+        console.log('GET_ALL_USER_FOR_GROUP', data)
+        if (data.message === 'ok' || data.users.length > 0) {
+            createGroups(data.users)
+        }
+    })
+
+    let nameOfGroup;
+    function createGroups(items) {
+        removeUserElement('.under-ul')
+        removeUserElement('.create-button')
+        do {
+            nameOfGroup = prompt("Enter Your Group Name")
+        } while (!nameOfGroup);
+        const selectedIds = [];
+
+        items.forEach(item => {
+            if (item._id !== currentUser._id) {
+                const li = document.createElement('li');
+                li.classList.add('under-ul');
+                li.style.padding = '5px'
+
+                // Create checkbox element
+                const checkbox = document.createElement('input');
+                const label = document.createElement('label');
+                label.style.display = 'inline'
+                label.style.margin = '0px 0px 0px 10px'
+                checkbox.type = 'checkbox';
+                checkbox.classList.add('dropdown-item-checkbox');
+                checkbox.id = item._id;
+                label.innerHTML = item.name;
+
+                // Add event listener to toggle selection
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        selectedIds.push(item._id);
+                        li.classList.add('selected');
+                    } else {
+                        // Checkbox unchecked, remove ID from selectedIds array
+                        const index = selectedIds.indexOf(item._id);
+                        if (index !== -1) {
+                            selectedIds.splice(index, 1);
+                            li.classList.remove('selected'); // Optionally, remove the class to indicate deselection
+                        }
+                    }
+                    console.log(selectedIds);
+                });
+                li.appendChild(checkbox);
+                li.appendChild(label);
+                document.getElementById('dropDown').appendChild(li);
+            }
+        });
+
+        const createButton = document.createElement('button');
+        createButton.textContent = 'Create';
+        createButton.classList.add('create-button');
+        createButton.addEventListener('click', () => {
+            selectedIds.push(currentUser._id);
+            yourFunction(selectedIds);
+        });
+        document.getElementById('dropDown').appendChild(createButton);
+    }
+    function yourFunction(selectedId) {
+        // selectedId = selectedId.push(currentUser._id)
+        let data = {
+            selectedId,
+            nameOfGroup
+        }
+        socket.emit("CREATE_GROUP", data)
+    }
+
+    socket.on('CREATE_GROUP', (data) => {
+        if (data.message === 'ok') {
+            // console.log("CREATE_GROUP", data)
+            createGroupElement(data.makeGroup.groupName, data.makeGroup._id)
+        } else {
+            alert(data.message)
+        }
+    })
+    function groupChat(id) {
+        receiver = id;
+        addNewGroupChat = true
+        const data = {
+            sender: currentUser._id,
+            receiver
+        }
+        socket.emit("PAST_GROUP_CHAT", data)
+    }
+    socket.on('PAST_GROUP_CHAT', (data) => {
+        removeUserElement('.ww-100')
+        if (data.message === 'ok') {
+            console.log("PAST_GROUP_CHAT", data)
+            for (let i = 0; i < data.pastChatData.length; i++) {
+                // console.log("Data.......>", data.chatData[i].sender._id, data.chatData[i].message)
+                printPastGroupMessage(data.pastChatData[i].sender.name, data.pastChatData[i].sender._id, data.pastChatData[i].message)
+            }
+        } else {
+            alert(data.message)
+        }
+    })
+    function printPastGroupMessage(name, senderId, message) {
+        let parents = document.getElementById("chat-messagess")
+        var newDiv = document.createElement("div");
+        var h = document.createElement("p");
+        h.classList.add('chat-message')
+        h.innerHTML = name
+        newDiv.classList.add("ww-100");
+        var newP = document.createElement("p");
+        if (senderId == currentUser._id) {
+            newDiv.classList.add("right");
+            newP.classList.add("chat-message");
+            newP.classList.add("rightSide");
+            newP.id = "chatMess";
+            newP.textContent = message;
+            newDiv.appendChild(h)
+            newDiv.appendChild(newP)
+            parents.appendChild(newDiv);
+        } else {
+            newDiv.classList.add("left");
+            newP.classList.add("chat-message");
+            newP.classList.add("leftSide");
+            newP.id = "chatMess";
+            newP.textContent = message;
+            newDiv.appendChild(h)
+            newDiv.appendChild(newP)
+            parents.appendChild(newDiv);
+        }
+
+        scrollToBottom()
+    }
+
 </script>
+
 
 </html>
