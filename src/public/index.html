@@ -9,9 +9,10 @@
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
         /* This css for Login */
-        p{
+        p {
             margin: 0px !important;
         }
+
         #all-login {
             /* width: 100%; */
             display: flex;
@@ -359,8 +360,8 @@
 <script>
     const socket = io();
     let receiver;
-    let addNewUserChat = false;
-    let addNewGroupChat = false
+    let Chat = false;
+    let Group = false
 
     // get cookies 
     var username = getCookie("User");
@@ -402,6 +403,7 @@
     socket.on("LOGIN_USER_RES", (data) => {
         console.log("LOGIN_USER_RES", data.findUser)
         if (data.message === 'ok') {
+            alert("Login Successfully")
             setCookie("User", JSON.stringify(data.findUser), 5);
             window.location.reload();
             socket.emit('ALL_USER')
@@ -490,11 +492,14 @@
         userDiv.onclick = function () {
             openChat();
             chat(id);
+            clearInput();
         };
         userDiv.textContent = name;
         document.getElementById("all-user").appendChild(userDiv);
     }
-
+    function clearInput() {
+        document.getElementById("chatMessage").value = "";
+    }
     function removeUserElement(name) {
         var elements = document.querySelectorAll(name);
         elements.forEach(function (element) {
@@ -515,7 +520,7 @@
     socket.on('SEARCH_USER', (data) => {
         console.log("Data Of SEARCH_USER = ", data)
         if (data.message === 'ok') {
-            removeUserElement()
+            removeUserElement('.user')
             printUser(data)
         } else {
             alert(data.message)
@@ -525,7 +530,7 @@
     // Print User
     function printUser(data) {
         if (data.users.length !== 0) {
-            removeUserElement()
+            removeUserElement('.user')
             if (data.users.length > 10) {
                 for (let i = 0; i < 10; i++) {
                     if (currentUser._id !== data.users[i]._id) {
@@ -550,7 +555,7 @@
 
     function chat(id) {
         receiver = id
-        addNewUserChat = true
+        Chat = true
         let data = {
             senderId: currentUser._id,
             receiverId: id
@@ -559,23 +564,25 @@
         socket.emit('PAST_CHAT_MESSAGE', data)
     }
     socket.on('PAST_CHAT_MESSAGE', (data) => {
-        console.log("PAST_CHAT_MESSAGE:::::::>>>>", data)
+        // console.log("PAST_CHAT_MESSAGE:::::::>>>>", data)
         removeUserElement('.ww-100')
         if (data.chatData.length > 0) {
             // console.log('PAST_CHAT_MESSAGE========>', data)
             if (data.message === 'ok') {
                 for (let i = 0; i < data.chatData.length; i++) {
                     // console.log("Data.......>", data.chatData[i].sender._id, data.chatData[i].message)
-                    printPastMessage(data.chatData[i].sender._id, data.chatData[i].message)
+                    printPastMessage(data.chatData[i].sender.name, data.chatData[i].sender._id, data.chatData[i].message)
                 }
             } else {
                 alert(data.message);
             }
         }
     })
-    function printPastMessage(senderId, message) {
+    function printPastMessage(name, senderId, message) {
         let parents = document.getElementById("chat-messagess")
         var newDiv = document.createElement("div");
+        var h = document.createElement("p");
+        h.classList.add('chat-message')
         newDiv.classList.add("ww-100");
         var newP = document.createElement("p");
         if (senderId == currentUser._id) {
@@ -584,6 +591,8 @@
             newP.classList.add("rightSide");
             newP.id = "chatMess";
             newP.textContent = message;
+            h.innerHTML = 'you'
+            newDiv.appendChild(h)
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);
         } else {
@@ -592,6 +601,8 @@
             newP.classList.add("leftSide");
             newP.id = "chatMess";
             newP.textContent = message;
+            h.innerHTML = name
+            newDiv.appendChild(h)
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);
         }
@@ -603,24 +614,34 @@
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
     function addChats() {
+        // console.log("Avvi gyu !!!!!!!!")
         const message = document.getElementById('chatMessage').value
         let sender = currentUser._id
-        if (addNewUserChat) {
-            addNewUserChat = false;
-            let data = {
-                sender, receiver, message
-            }
-            socket.emit('ADD_CHAT', data)
-            document.getElementById('chatMessage').value = ''
+
+        // This is For User Chat
+        if (Chat) {
+            addUserChatToDB(sender, receiver, message)
         }
-        if (addNewGroupChat) {
-            addNewGroupChat = false;
-            let data = {
-                sender, receiver, message
-            }
-            socket.emit('ADD_GROUP_CHAT', data)
-            document.getElementById('chatMessage').value = ''
+        // this is for Group Chat.
+        if (Group) {
+            addGroupChatToDB(sender, receiver, message)
         }
+
+    }
+
+    function addUserChatToDB(sender, receiver, message) {
+        let data = {
+            sender, receiver, message
+        }
+        socket.emit('ADD_CHAT', data)
+        document.getElementById('chatMessage').value = ''
+    }
+    function addGroupChatToDB(sender, receiver, message) {
+        let data = {
+            sender, receiver, message
+        }
+        socket.emit('ADD_GROUP_CHAT', data)
+        document.getElementById('chatMessage').value = ''
     }
     socket.on('ADD_CHAT', (data) => {
         if (data.message === 'ok') {
@@ -632,23 +653,26 @@
     })
     socket.on('ADD_GROUP_CHAT', (data) => {
         if (data.message === 'ok') {
-            printMessage(data.addGroupChat.sender, data.addGroupChat.message)
+            // console.log('ADD_GROUP_CHAT', data)
+            printMessage(data.addGroupChat.sender.name, data.addGroupChat.sender._id, data.addGroupChat.message)
         } else {
             alert(data.message)
         }
     })
     socket.on('GET_CHAT_DATA', (data) => {
         if (data.message === 'ok') {
-            console.log(data)
-            printMessage(data.sendData.sender._id, data.sendData.message);
+            // console.log(data)
+            printMessage(data.sendData.sender.name, data.sendData.sender._id, data.sendData.message);
         } else {
             alert(data.message)
         }
     })
-    function printMessage(id, message) {
+    function printMessage(name, id, message) {
         let parents = document.getElementById("chat-messagess")
         var newDiv = document.createElement("div");
-        newDiv.classList.add("w-100");
+        var h = document.createElement("p");
+        h.classList.add('chat-message')
+        newDiv.classList.add("ww-100");
         var newP = document.createElement("p");
         if (id == currentUser._id) {
             newDiv.classList.add("right");
@@ -656,6 +680,8 @@
             newP.classList.add("rightSide");
             newP.id = "chatMess";
             newP.textContent = message;
+            h.innerHTML = 'you'
+            newDiv.appendChild(h)
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);
         } else {
@@ -664,6 +690,8 @@
             newP.classList.add("leftSide");
             newP.id = "chatMess";
             newP.textContent = message;
+            h.innerHTML = name
+            newDiv.appendChild(h)
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);
         }
@@ -673,7 +701,7 @@
     socket.emit("GET_ALL_GROUP", currentUser._id)
     socket.on("GET_ALL_GROUP", (data) => {
         if (data.message === "ok") {
-            console.log(data)
+            // console.log(data)
             removeUserElement('.group')
             if (data.groups.length != 0) {
 
@@ -762,7 +790,9 @@
         createButton.textContent = 'Create';
         createButton.classList.add('create-button');
         createButton.addEventListener('click', () => {
-            selectedIds.push(currentUser._id);
+            if (selectedIds.length > 1) {
+                selectedIds.push(currentUser._id);
+            }
             yourFunction(selectedIds);
         });
         document.getElementById('dropDown').appendChild(createButton);
@@ -786,7 +816,7 @@
     })
     function groupChat(id) {
         receiver = id;
-        addNewGroupChat = true
+        Group = true
         const data = {
             sender: currentUser._id,
             receiver
@@ -796,7 +826,7 @@
     socket.on('PAST_GROUP_CHAT', (data) => {
         removeUserElement('.ww-100')
         if (data.message === 'ok') {
-            console.log("PAST_GROUP_CHAT", data)
+            // console.log("PAST_GROUP_CHAT", data)
             for (let i = 0; i < data.pastChatData.length; i++) {
                 // console.log("Data.......>", data.chatData[i].sender._id, data.chatData[i].message)
                 printPastGroupMessage(data.pastChatData[i].sender.name, data.pastChatData[i].sender._id, data.pastChatData[i].message)
@@ -810,7 +840,7 @@
         var newDiv = document.createElement("div");
         var h = document.createElement("p");
         h.classList.add('chat-message')
-        h.innerHTML = name
+
         newDiv.classList.add("ww-100");
         var newP = document.createElement("p");
         if (senderId == currentUser._id) {
@@ -819,6 +849,7 @@
             newP.classList.add("rightSide");
             newP.id = "chatMess";
             newP.textContent = message;
+            h.innerHTML = 'you'
             newDiv.appendChild(h)
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);
@@ -828,6 +859,7 @@
             newP.classList.add("leftSide");
             newP.id = "chatMess";
             newP.textContent = message;
+            h.innerHTML = name
             newDiv.appendChild(h)
             newDiv.appendChild(newP)
             parents.appendChild(newDiv);

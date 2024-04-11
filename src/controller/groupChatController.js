@@ -13,16 +13,17 @@ const addGroupChat = async (data, socketID) => {
         // console.log("findGroupChat::::::::", findGroupChat)
         if (!findGroupChat) return io.to(socketID).emit('ADD_GROUP_CHAT', { status: 404, message: "Can't Found Group By Id." })
 
-        const addGroupChat = await GroupChat.create({
+        const Data = await GroupChat.create({
             sender,
             receiver,
             message
         })
-        if (!addGroupChat) return io.to(socketID).emit('ADD_GROUP_CHAT', { status: 404, message: "Can't add data" })
+        if (!Data) return io.to(socketID).emit('ADD_GROUP_CHAT', { status: 404, message: "Can't add data" })
         let socketIds = [];
         for (let i = 0; i < findGroupChat.members.length; i++) {
             socketIds.push(findGroupChat.members[i].socketId)
         }
+        const addGroupChat = await GroupChat.findById(Data._id).populate('sender')
         return io.to(socketIds).emit('ADD_GROUP_CHAT', { status: 200, message: "ok", addGroupChat });
     } catch (error) {
         console.log("addGroupChat", error.message)
