@@ -331,6 +331,7 @@
             <div class="all-users">
                 <input type="search" class="sidebar-header" id="search-user" placeholder="Search User"
                     onkeyup="findUserName()">
+                <div class="current-user" id="currentUserName"></div>
                 <div class="user-list" id="all-user"></div>
             </div>
         </div>
@@ -359,14 +360,16 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-    let receiver;
+    let Chatreceiver;
+    let Groupreceiver;
     let Chat = false;
     let Group = false
-
+    var selectedUser;
     // get cookies 
     var username = getCookie("User");
     const currentUser = JSON.parse(username)
     if (username) {
+        document.getElementById('currentUserName').innerHTML = currentUser.name
         socket.emit('ADD_SOCKET_ID', currentUser)
         socket.emit('ALL_USER')
         document.getElementById('form-all').style.display = 'none'
@@ -404,8 +407,9 @@
         console.log("LOGIN_USER_RES", data.findUser)
         if (data.message === 'ok') {
             alert("Login Successfully")
-            setCookie("User", JSON.stringify(data.findUser), 5);
+            setCookie("User", JSON.stringify(data.findUser), 1);
             window.location.reload();
+            document.getElementById('currentUserName').innerHTML = data.findUser.name
             socket.emit('ALL_USER')
             document.getElementById('form-all').style.display = 'none'
             document.getElementById('all-login').style.display = 'none';
@@ -496,6 +500,14 @@
         };
         userDiv.textContent = name;
         document.getElementById("all-user").appendChild(userDiv);
+        const AllUser = document.getElementsByClassName('user');
+        for (let i = 0; i < AllUser.length; i++) {
+            if (AllUser[i].id == selectedUser) {
+                AllUser[i].style.color = 'red'
+            } else {
+                AllUser[i].style.color = 'black'
+            }
+        }
     }
     function clearInput() {
         document.getElementById("chatMessage").value = "";
@@ -551,14 +563,35 @@
         document.getElementById('chat-messagess').style.display = 'none'
         document.getElementById('search-bars').style.display = 'none'
         // document.getElementById('mains').style.display = 'none'
+        const AllUser = document.getElementsByClassName('user');
+        const groupUsers = document.getElementsByClassName('group');
+        for (let i = 0; i < AllUser.length; i++) {
+            AllUser[i].style.color = 'black'
+        }
+        for (let i = 0; i < groupUsers.length; i++) {
+            groupUsers[i].style.color = 'black'
+        }
     }
 
     function chat(id) {
-        receiver = id
+        Chatreceiver = id
         Chat = true
+        selectedUser = id;
+        const AllUser = document.getElementsByClassName('user');
+        const groupUsers = document.getElementsByClassName('group');
+        for (let i = 0; i < AllUser.length; i++) {
+            if (AllUser[i].id !== id) {
+                AllUser[i].style.color = 'black'
+            } else {
+                AllUser[i].style.color = 'red'
+            }
+        }
+        for (let i = 0; i < groupUsers.length; i++) {
+            groupUsers[i].style.color = 'black'
+        }
         let data = {
             senderId: currentUser._id,
-            receiverId: id
+            receiverId: Chatreceiver
         }
         // console.log("This data is for add chat:-------------",data)
         socket.emit('PAST_CHAT_MESSAGE', data)
@@ -620,11 +653,11 @@
 
         // This is For User Chat
         if (Chat) {
-            addUserChatToDB(sender, receiver, message)
+            addUserChatToDB(sender, Chatreceiver, message)
         }
         // this is for Group Chat.
         if (Group) {
-            addGroupChatToDB(sender, receiver, message)
+            addGroupChatToDB(sender, Groupreceiver, message)
         }
 
     }
@@ -653,16 +686,33 @@
     })
     socket.on('ADD_GROUP_CHAT', (data) => {
         if (data.message === 'ok') {
-            // console.log('ADD_GROUP_CHAT', data)
-            printMessage(data.addGroupChat.sender.name, data.addGroupChat.sender._id, data.addGroupChat.message)
+            console.log('ADD_GROUP_CHAT ::::::::::::::', data)
+            console.log("data.sendData.receiver._id:::::", data.addGroupChat.receiver)
+            console.log("Chatreceiver::;", Groupreceiver)
+            // console.log("Chatreceiver::;", data.sendData.receiver._id == Chatreceiver)
+            if (data.addGroupChat.receiver == Groupreceiver) {
+                printMessage(data.addGroupChat.sender.name, data.addGroupChat.sender._id, data.addGroupChat.message)
+            }
+            // if (data.sendData.sender._id == Chatreceiver) {
+            //     printMessage(data.addGroupChat.sender.name, data.addGroupChat.sender._id, data.addGroupChat.message)
+            // }
         } else {
             alert(data.message)
         }
     })
     socket.on('GET_CHAT_DATA', (data) => {
         if (data.message === 'ok') {
+            console.log('GET_CHAT_DATA:::::::::::::', data)
             // console.log(data)
-            printMessage(data.sendData.sender.name, data.sendData.sender._id, data.sendData.message);
+            console.log("data.sendData.receiver._id:::::", data.sendData.receiver._id)
+            console.log("Chatreceiver::;", Chatreceiver)
+            console.log("Chatreceiver::;", data.sendData.receiver._id == Chatreceiver)
+            if (data.sendData.receiver._id == Chatreceiver) {
+                printMessage(data.sendData.sender.name, data.sendData.sender._id, data.sendData.message);
+            }
+            if (data.sendData.sender._id == Chatreceiver) {
+                printMessage(data.sendData.sender.name, data.sendData.sender._id, data.sendData.message);
+            }
         } else {
             alert(data.message)
         }
@@ -815,18 +865,30 @@
         }
     })
     function groupChat(id) {
-        receiver = id;
+        Groupreceiver = id;
         Group = true
+        let AllUser = document.getElementsByClassName('group')
+        let chatUsers = document.getElementsByClassName('user')
+        for (let i = 0; i < AllUser.length; i++) {
+            if (AllUser[i].id !== id) {
+                AllUser[i].style.color = 'black'
+            } else {
+                AllUser[i].style.color = 'red'
+            }
+        }
+        for (let i = 0; i < chatUsers.length; i++) {
+            chatUsers[i].style.color = 'black'
+        }
         const data = {
             sender: currentUser._id,
-            receiver
+            receiver: Groupreceiver
         }
         socket.emit("PAST_GROUP_CHAT", data)
     }
     socket.on('PAST_GROUP_CHAT', (data) => {
         removeUserElement('.ww-100')
         if (data.message === 'ok') {
-            // console.log("PAST_GROUP_CHAT", data)
+            // console.log("PAST_GROUP_CHAT", data)z
             for (let i = 0; i < data.pastChatData.length; i++) {
                 // console.log("Data.......>", data.chatData[i].sender._id, data.chatData[i].message)
                 printPastGroupMessage(data.pastChatData[i].sender.name, data.pastChatData[i].sender._id, data.pastChatData[i].message)

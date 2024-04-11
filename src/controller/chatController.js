@@ -3,7 +3,6 @@ import { User } from "../model/userModel.js";
 
 const addChat = async (data, socketID) => {
     try {
-        console.log("This is Add User Chat::::::",data)
         const { sender, receiver, message } = data;
         if (!sender && !receiver && !message) return io.to(socketID).emit("ADD_CHAT", { status: 404, message: "Enter Valid Data" });
 
