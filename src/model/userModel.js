@@ -9,10 +9,10 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    socketId:{
-        type:String
+    socketId: {
+        type: String
     }
-})
+}, { timestamps: true })
 
 const User = mongoose.model("User", userSchema);
 

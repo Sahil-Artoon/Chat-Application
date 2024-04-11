@@ -11,7 +11,7 @@ const groupSchema = mongoose.Schema({
         ref: "User",
         required: true
     }]
-})
+}, { timestamps: true })
 
 const Group = mongoose.model("Group", groupSchema);
 

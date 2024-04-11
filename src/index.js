@@ -5,7 +5,7 @@ import path from 'path';
 import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import connectDB from './config/connectDB.js';
+import connectDB from './connection/connectDB.js';
 import router from './Router/userRouter.js';
 import { addNewSocketId, addUserData, findAlluser, findAlluserAtSearchTime, findAlluserForGroup, findUserWithRegex, loginUser, updateSocketId } from './controller/userController.js';
 import { addChat, findPaseChatMessages, getCurrentChatData } from './controller/chatController.js';

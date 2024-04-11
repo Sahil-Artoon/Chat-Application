@@ -15,7 +15,7 @@ const groupChatSchema = mongoose.Schema({
         type: String,
         required: true
     }
-})
+}, { timestamps: true })
 
 const GroupChat = mongoose.model("GroupChat", groupChatSchema);
 
