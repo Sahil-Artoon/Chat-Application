@@ -754,13 +754,8 @@
             // console.log(data)
             removeUserElement('.group')
             if (data.groups.length != 0) {
-
-                if (data.groups.length > 1) {
-                    for (let i = 0; i < data.groups.length; i++) {
-                        createGroupElement(data.groups[i].groupName, data.groups[i]._id);
-                    }
-                } else {
-                    createGroupElement(data.groups[0].groupName, data.groups[0]._id);
+                for (let i = 0; i < data.groups.length; i++) {
+                    createGroupElement(data.groups[i].groupName, data.groups[i]._id);
                 }
             }
         } else {
@@ -840,7 +835,7 @@
         createButton.textContent = 'Create';
         createButton.classList.add('create-button');
         createButton.addEventListener('click', () => {
-            if (selectedIds.length > 1) {
+            if (selectedIds.length >= 1) {
                 selectedIds.push(currentUser._id);
             }
             yourFunction(selectedIds);
@@ -853,6 +848,7 @@
             selectedId,
             nameOfGroup
         }
+        console.log("CREATE_GROUP::::::::::", data)
         socket.emit("CREATE_GROUP", data)
     }
 

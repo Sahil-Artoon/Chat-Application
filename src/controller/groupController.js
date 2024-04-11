@@ -14,6 +14,7 @@ const createGroup = async (data, socketID) => {
             members: selectedId
         })
         const dataOfNewGroup = await Group.findById(makeGroup._id).populate('members')
+        console.log("CREATE_GROUP:::::::❤",dataOfNewGroup)
         let socketIds = []
         for (let i = 0; i < dataOfNewGroup.members.length; i++) {
             socketIds.push(dataOfNewGroup.members[i].socketId)
