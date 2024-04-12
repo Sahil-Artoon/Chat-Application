@@ -5,16 +5,18 @@ import { User } from "../model/userModel.js";
 
 const createGroup = async (data, socketID) => {
     try {
-        const { selectedId, nameOfGroup } = data
+        const { admin, selectedId, nameOfGroup } = data
         if (selectedId.length == 0) return io.to(socketID).emit("CREATE_GROUP", { status: 404, message: "Please select group members." })
         if (!nameOfGroup) return io.to(socketID).emit("CREATE_GROUP", { status: 404, message: "Please enter group name." })
+        if (!admin) return io.to(socketID).emit("CREATE_GROUP", { status: 404, message: "Please enter admin." })
 
         const makeGroup = await Group.create({
+            admin,
             groupName: nameOfGroup,
             members: selectedId
         })
         const dataOfNewGroup = await Group.findById(makeGroup._id).populate('members')
-        console.log("CREATE_GROUP:::::::❤",dataOfNewGroup)
+        console.log("CREATE_GROUP:::::::❤", dataOfNewGroup)
         let socketIds = []
         for (let i = 0; i < dataOfNewGroup.members.length; i++) {
             socketIds.push(dataOfNewGroup.members[i].socketId)

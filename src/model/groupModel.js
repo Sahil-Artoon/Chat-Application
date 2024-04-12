@@ -1,6 +1,11 @@
 import { mongoose } from "mongoose";
 
 const groupSchema = mongoose.Schema({
+    admin:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    }],
     groupName: {
         type: String,
         required: true,

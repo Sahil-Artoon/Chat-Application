@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const sendFileToUser = (req, res) => {
     try {
         console.log("file sending");
-        const filePath = path.join(__dirname, "../public", "index.html");
+        const filePath = path.join(__dirname, "../../public", "index.html");
         return res.sendFile(filePath);
     } catch (error) {
         console.error(error.message);
