@@ -36,7 +36,7 @@ const getAllGroups = async (data, socketID) => {
         const findUser = await User.findById(data)
         if (!findUser) return io.to(socketID).emit("GET_ALL_GROUP", { status404, message: "can't Get user By UserID !!!" })
 
-        const groups = await Group.find({ members: data })
+        const groups = await Group.find({ members: data }).populate('members')
         if (!groups) return io.to(socketID).emit("GET_ALL_GROUP", { status: 404, message: "can't Get Groups!!!" })
 
         // console.log("GET_ALL_GROUP :::::", groups);

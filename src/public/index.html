@@ -361,7 +361,7 @@
 <script>
     const socket = io();
     let Chatreceiver;
-    let Groupreceiver;
+    // let Groupreceiver;
     let Chat = false;
     let Group = false
     var selectedUser;
@@ -492,6 +492,7 @@
     }
 
     function createUserElement(name, id) {
+        perentDiv = document.createElement('div');
         var userDiv = document.createElement("div");
         userDiv.classList.add("user");
         userDiv.id = id; // Set the id attribute
@@ -501,7 +502,8 @@
             clearInput();
         };
         userDiv.textContent = name;
-        document.getElementById("all-user").appendChild(userDiv);
+        perentDiv.appendChild(userDiv);
+        document.getElementById("all-user").appendChild(perentDiv);
         const AllUser = document.getElementsByClassName('user');
         for (let i = 0; i < AllUser.length; i++) {
             if (AllUser[i].id == selectedUser) {
@@ -659,7 +661,7 @@
         }
         // this is for Group Chat.
         if (Group) {
-            addGroupChatToDB(sender, Groupreceiver, message)
+            addGroupChatToDB(sender, Chatreceiver, message)
         }
 
     }
@@ -683,32 +685,31 @@
             // console.log(data)
             socket.emit('GET_CHAT_DATA', data)
         } else {
-            alert(data.message)
+            // alert(data.message)
         }
     })
     socket.on('ADD_GROUP_CHAT', (data) => {
         if (data.message === 'ok') {
-            console.log('ADD_GROUP_CHAT ::::::::::::::', data)
-            console.log("data.sendData.receiver._id:::::", data.addGroupChat.receiver)
-            console.log("Chatreceiver::;", Groupreceiver)
+            // console.log('ADD_GROUP_CHAT ::::::::::::::', data)
+            // console.log("data.addGroupChat.receiver:::::", data.addGroupChat.receiver)
+            // console.log("Chatreceiver::;", Chatreceiver)
             // console.log("Chatreceiver::;", data.sendData.receiver._id == Chatreceiver)
-            if (data.addGroupChat.receiver == Groupreceiver) {
+            if (data.addGroupChat.receiver == Chatreceiver) {
                 printMessage(data.addGroupChat.sender.name, data.addGroupChat.sender._id, data.addGroupChat.message)
             }
-            // if (data.sendData.sender._id == Chatreceiver) {
-            //     printMessage(data.addGroupChat.sender.name, data.addGroupChat.sender._id, data.addGroupChat.message)
-            // }
+            if (data.sendData.sender._id == Chatreceiver) {
+                printMessage(data.addGroupChat.sender.name, data.addGroupChat.sender._id, data.addGroupChat.message)
+            }
         } else {
-            alert(data.message)
+            // alert(data.message)
         }
     })
     socket.on('GET_CHAT_DATA', (data) => {
         if (data.message === 'ok') {
-            console.log('GET_CHAT_DATA:::::::::::::', data)
-            // console.log(data)
-            console.log("data.sendData.receiver._id:::::", data.sendData.receiver._id)
-            console.log("Chatreceiver::;", Chatreceiver)
-            console.log("Chatreceiver::;", data.sendData.receiver._id == Chatreceiver)
+            // console.log('GET_CHAT_DATA:::::::::::::', data)
+            // console.log("data.sendData.receiver._id:::::", data.sendData.receiver._id)
+            // console.log("Chatreceiver::;", Chatreceiver)
+            // console.log("Chatreceiver::;", data.sendData.receiver._id == Chatreceiver)
             if (data.sendData.receiver._id == Chatreceiver) {
                 printMessage(data.sendData.sender.name, data.sendData.sender._id, data.sendData.message);
             }
@@ -716,7 +717,7 @@
                 printMessage(data.sendData.sender.name, data.sendData.sender._id, data.sendData.message);
             }
         } else {
-            alert(data.message)
+            // alert(data.message)
         }
     })
     function printMessage(name, id, message) {
@@ -753,27 +754,38 @@
     socket.emit("GET_ALL_GROUP", currentUser._id)
     socket.on("GET_ALL_GROUP", (data) => {
         if (data.message === "ok") {
-            // console.log(data)
+            // console.log('GET_ALL_GROUP:::::::::::', data)
             removeUserElement('.group')
+            var names = ''
             if (data.groups.length != 0) {
+                data.groups.forEach(group => {
+                    group.members.forEach(member => {
+                        names += member.name + '  ';
+                    });
+                })
                 for (let i = 0; i < data.groups.length; i++) {
-                    createGroupElement(data.groups[i].groupName, data.groups[i]._id);
+                    createGroupElement(data.groups[i].groupName, data.groups[i]._id,names);
                 }
             }
         } else {
             alert(data.message)
         }
     })
-    function createGroupElement(name, id) {
+    function createGroupElement(name, id,names) {
+        let perentDiv = document.createElement("div");
         var groupDiv = document.createElement("div");
         groupDiv.classList.add("group");
+        groupDiv.setAttribute('data-toggle', 'tooltip');
+        groupDiv.setAttribute('data-placement', 'top');
+        groupDiv.setAttribute('title', names);
         groupDiv.id = id;
         groupDiv.onclick = () => {
             openChat();
             groupChat(id);
         };
         groupDiv.textContent = name;
-        document.getElementById("all-group-item").appendChild(groupDiv);
+        perentDiv.appendChild(groupDiv);
+        document.getElementById("all-group-item").appendChild(perentDiv);
     }
 
     function sendGroupEvent() {
@@ -850,7 +862,7 @@
             selectedId,
             nameOfGroup
         }
-        console.log("CREATE_GROUP::::::::::", data)
+        // console.log("CREATE_GROUP::::::::::", data)
         socket.emit("CREATE_GROUP", data)
     }
 
@@ -863,7 +875,7 @@
         }
     })
     function groupChat(id) {
-        Groupreceiver = id;
+        Chatreceiver = id;
         Group = true
         let AllUser = document.getElementsByClassName('group')
         let chatUsers = document.getElementsByClassName('user')
@@ -879,7 +891,7 @@
         }
         const data = {
             sender: currentUser._id,
-            receiver: Groupreceiver
+            receiver: Chatreceiver
         }
         socket.emit("PAST_GROUP_CHAT", data)
     }
